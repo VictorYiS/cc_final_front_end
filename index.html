@@ -1,0 +1,174 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Selector</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: url('./static/table.jpg') no-repeat center center/cover;
+        }
+        .container {
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 400px;
+        }
+        .container h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        input, select, button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .mechanic-option {
+            width: auto;
+            padding: 5px 10px;
+            margin: 5px;
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .mechanic-option:hover {
+            background-color: #0000FF;
+            color: white;
+        }
+
+        .mechanic-option.selected {
+            background-color: #0000FF;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Game Selector</h2>
+        <form id="game-form">
+            <div class="form-group">
+                <label for="players">Number of Players:</label>
+                <input type="number" id="players" placeholder="Players" required>
+            </div>
+            <div class="form-group">
+                <label for="time">Play Time (minutes):</label>
+                <input type="number" id="time" placeholder="e.g., 30" required>
+            </div>
+            <div class="form-group">
+                <label for="type">Game Type:</label>
+                <select id="type">
+                    <option value="" disabled selected>Select a type</option>
+                    <option value="adventure">adventure</option>
+                    <option value="territory_building">territory building</option>
+                    <option value="civilization">civilization</option>
+                    <option value="exploration">exploration</option>
+                    <option value="fantasy">fantasy</option>
+                    <option value="economic">economic</option>
+                    <option value="farming_industry_manufacturing">farming industry manufacturing</option>
+                    <option value="fighting">fighting</option>
+                    <option value="bluffing">bluffing</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="mechanics">Mechanics:</label>
+                <div id="mechanics">
+                    <button type="button" class="mechanic-option" data-value="Action and Turn Management">Action and Turn Management</button>
+                    <button type="button" class="mechanic-option" data-value="Card Play">Card Play</button>
+                    <button type="button" class="mechanic-option" data-value="Dice and Randomness">Dice and Randomness</button>
+                    <button type="button" class="mechanic-option" data-value="Player Interaction">Player Interaction</button>
+                    <button type="button" class="mechanic-option" data-value="Progression and Development">Progression and Development</button>
+                    <button type="button" class="mechanic-option" data-value="Resource and Area Management">Resource and Area Management</button>
+                </div>
+                <p id="selected-mechanics">Selected Mechanics: None</p>
+            </div>
+            <div class="form-group">
+                <label for="background-description">Background Description:</label>
+                <textarea id="background-description" placeholder="Describe the background of the game" rows="4" style="width: 100%;" required></textarea>
+            </div>
+            <button type="submit">Generate Games</button>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('game-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const urlPrefix = 'https://3f98-80-114-20-42.ngrok-free.app';
+
+            const minPlayers = document.getElementById('players').value;
+            const time = document.getElementById('time').value;
+            const type = document.getElementById('type').value;
+            const backgroundDescription = document.getElementById('background-description').value;
+            const mechanics = Array.from(document.querySelectorAll('.mechanic-option.selected')).map(button => button.dataset.value);
+
+            if (!minPlayers || !time || !type || !mechanics || !backgroundDescription) {
+                alert('Please fill out all fields.');
+                return;
+            }
+            fetch(urlPrefix + '/api/v1/rules/generate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    number_of_players: parseInt(minPlayers),
+                    game_duration: time + ' minutes',
+                    description_of_background: backgroundDescription,
+                    game_category: type,
+                    game_mechanics: mechanics
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                window.location.href = `play.html?data=${encodeURIComponent(JSON.stringify(data))}`;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+
+        });
+        document.querySelectorAll('.mechanic-option').forEach(button => {
+            button.addEventListener('click', function() {
+                this.classList.toggle('selected');
+                updateSelectedMechanics();
+            });
+        });
+
+        function updateSelectedMechanics() {
+            const selectedOptions = Array.from(document.querySelectorAll('.mechanic-option.selected'))
+                .map(button => button.textContent);
+            document.getElementById('selected-mechanics').innerText = `Selected Mechanics: ${selectedOptions.join(', ')}`;
+        }
+    </script>
+</body>
+</html>
